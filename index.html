@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cek Unfollowers Instagram</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .file-input { margin: 20px 0; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+        .unfollower { padding: 5px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cek Unfollowers Instagram</h1>
+        <p>Upload file following.json dan followers_1.json:</p>
+        
+        <div class="file-input">
+            <input type="file" id="followingFile" accept=".json">
+            <label for="followingFile">Following.json</label>
+        </div>
+        
+        <div class="file-input">
+            <input type="file" id="followersFile" accept=".json">
+            <label for="followersFile">Followers_1.json</label>
+        </div>
+
+        <button onclick="compare()">Cek Unfollowers</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function getUsernames(data) {
+            return data.map(entry => 
+                entry.string_list_data[0]?.value.toLowerCase()
+            ).filter(Boolean);
+        }
+
+        async function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(JSON.parse(e.target.result));
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        async function compare() {
+            try {
+                const followingFile = document.getElementById('followingFile').files[0];
+                const followersFile = document.getElementById('followersFile').files[0];
+
+                if (!followingFile || !followersFile) {
+                    alert('Upload kedua file terlebih dahulu!');
+                    return;
+                }
+
+                const followingData = await readFile(followingFile);
+                const followersData = await readFile(followersFile);
+
+                const following = getUsernames(followingData.relationships_following);
+                const followers = getUsernames(followersData);
+
+                const unfollowers = following.filter(user => !followers.includes(user));
+
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `<h3>${unfollowers.length} Akun Tidak Followback:</h3>`;
+                
+                unfollowers.forEach(user => {
+                    resultDiv.innerHTML += `
+                        <div class="unfollower">
+                            <a href="https://instagram.com/${user}" target="_blank">@${user}</a>
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                alert('Error: Pastikan file JSON valid!');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
